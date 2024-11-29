@@ -1,0 +1,116 @@
+﻿@page "/counter"
+@using CLiente.Data.DTO
+@using CLiente.Services
+@using Cliente.Components.Modal
+@using Cliente.Data.Model
+@using CurrieTechnologies.Razor.SweetAlert2
+@rendermode InteractiveServer
+@inject ITareasServices tareasServices;
+@inject SweetAlertService Swal;
+<PageTitle>Counter</PageTitle>
+
+<h1>Tareas</h1>
+<button class="btn btn-primary" @onclick="AbrirModal">Agregar Tareas</button>
+<ModalFormulario @ref="modalFormulario" OnSubmit="ProcesarFormulario" />
+<UpdateModal @ref="modalFormularioEditar" />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Titulo</th>
+            <th>Descripcion</th>
+            <th>Fecha Contrato</th>
+            <th>Fecha Vencimiento</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (listaTarea == null)
+        {
+            <tr>
+                <td colspan="5" align="center">
+                    <img style="width:50px" src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif" />
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in listaTarea)
+            {
+                <tr>
+                   @*  <td>@item.ID</td> *@
+                    <td>@item.Titulo</td>
+                    <td>@item.Descripcion</td>
+                    <td>@item.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                    <td>@item.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditarTarea(item.ID)">Editar</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => Eliminar(item.ID)">Eliminar</button>
+                    </td>
+
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<script src="_content/CurrieTechnologies.Razor.SweetAlert2/sweetAlert2.min.js"></script>
+
+@code {
+
+    List<TareasDTO>? listaTarea = null;
+    protected override async Task OnInitializedAsync()
+    {
+        listaTarea = await tareasServices.Lista();
+    }
+    private async Task Eliminar(int id)
+    {
+        var resultado = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Eliminar Tarea",
+                Text = "Deseas eliminar la tarea?",
+                Icon = SweetAlertIcon.Question,
+                ShowCancelButton = true
+            });
+
+        if (resultado.IsConfirmed)
+        {
+            var eliminado = await tareasServices.Eliminar(id);
+            if (eliminado)
+                listaTarea = listaTarea!.FindAll(e => e.ID != id);
+        }
+    }
+
+    private ModalFormulario? modalFormulario;
+    private UpdateModal? modalFormularioEditar;
+    private List<FormularioModel> listaTareas = new();
+
+    private void AbrirModal()
+    {
+        modalFormulario?.Mostrar();
+    }
+
+    private async void ProcesarFormulario(FormularioModel tarea)
+    {
+        TareasDTO nuevaTarea = new TareasDTO();
+        nuevaTarea.ID = tarea.Id;
+        nuevaTarea.Titulo = tarea.titulo;
+        nuevaTarea.Descripcion = tarea.descripcion;
+        nuevaTarea.FechaCreacion = tarea.fechaCreacion;
+        nuevaTarea.FechaVencimiento = tarea.fechaVencimiento;
+        // nuevaTarea.Completada = bool.Parse(tarea.completado);
+       // nuevaTarea.Prioridad = (Prioridad)tarea.prioridad;
+        nuevaTarea.Etiqueta = tarea.etiqueta;
+
+        listaTarea.Add(nuevaTarea);
+        Console.WriteLine($"Tarea añadida: {tarea.titulo}");
+        listaTarea = await tareasServices.Lista();
+    }
+
+    private List<TareasDTO> tareas = new List<TareasDTO>();
+
+    private void EditarTarea(int id)
+    {
+        modalFormularioEditar?.Mostrar(id);
+    }
+}

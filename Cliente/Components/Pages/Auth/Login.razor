@@ -1,0 +1,79 @@
+﻿@page "/Account/login"
+@using System.ComponentModel.DataAnnotations
+@using CLiente.Data.Model
+@using CLiente.Services
+@using CurrieTechnologies.Razor.SweetAlert2
+@inject IAuthenticationServices authenticationServices;
+@inject SweetAlertService Swal;
+@inject NavigationManager Navigation
+<PageTitle>Log in</PageTitle>
+
+<h1>Log in</h1>
+<div class="row">
+    <div class="col-md-4">
+        <section>
+            
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
+                <h2>Inicio session.</h2>
+                <hr />
+                <ValidationSummary class="text-danger" role="alert" />
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <label for="email" class="form-label">Email</label>
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <label for="password" class="form-label">Password</label>
+                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                </div>
+                
+                <div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                </div>
+                <div>
+                  
+                </div>
+            </EditForm>
+            @errorMessage
+        </section>
+    </div>
+  
+</div>
+
+
+
+
+
+@code {
+
+    private string? errorMessage;
+
+
+    [SupplyParameterFromForm]
+    private FormularioLogin Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+
+
+    public async Task LoginUser()
+    {
+       
+        var results = await authenticationServices.AuthenticateAsync(Input); 
+        if (results.Status == 200 )
+        {
+
+            Navigation.NavigateTo("/Counter");
+        }
+        else if (results.Status == 401)
+        {
+            errorMessage = results.Mensaje;
+        }
+        
+    }
+
+
+}

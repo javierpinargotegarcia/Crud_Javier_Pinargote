@@ -1,0 +1,118 @@
+﻿@page "/tarea-modal/{TareaId:int}"
+@using CLiente.Data.DTO
+@using CLiente.Services
+@using Cliente.Data.Model
+@inject ITareasServices tareasServices
+
+@if (tarea != null)
+{
+    <div class="modal" style="display: @(IsVisible ? "block" : "none");">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Tarea</h5>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@tarea" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título</label>
+                            <InputText id="titulo" class="form-control" @bind-Value="tarea.Titulo" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <InputTextArea id="descripcion" class="form-control" @bind-Value="tarea.Descripcion" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="fechaCreacion" class="form-label">Fecha de Creación</label>
+                            <InputDate id="fechaCreacion" class="form-control" @bind-Value="tarea.FechaCreacion" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                            <InputDate id="fechaVencimiento" class="form-control" @bind-Value="tarea.FechaVencimiento" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <InputSelect id="estado" class="form-control" @bind-Value="tarea.Completada">
+                                <option value="true">Completada</option>
+                                <option value="false">En Proceso</option>
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label for="prioridad" class="form-label">Prioridad</label>
+                            <InputSelect id="prioridad" class="form-control" @bind-Value="tarea.Prioridad">
+                                <option value="Alta">Alta</option>
+                                <option value="Media">Media</option>
+                                <option value="Baja">Baja</option>
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label for="etiqueta" class="form-label">Etiqueta</label>
+                            <InputText id="etiqueta" class="form-control" @bind-Value="tarea.Etiqueta" />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="Cerrar">Cerrar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+else
+{
+    <p>No existen datos a Modificar !!...</p>
+}
+
+@code {
+    [Parameter]
+
+    public EventCallback<FormularioModel> OnSubmit { get; set; }
+
+    public int TareaId { get; set; }
+    public TareasDTO tarea { get; set; } = new();
+    public bool IsVisible { get; private set; } = false;
+
+    public async Task Mostrar(int id)
+    {
+        TareaId = id;
+        tarea = await tareasServices.ObtenerTareaPorId(TareaId);
+        IsVisible = true;
+        StateHasChanged();
+    }
+
+    private void Cerrar()
+    {
+        IsVisible = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var formularioModel = new FormularioModel
+            {
+                Id = tarea.ID,
+                titulo = tarea.Titulo,
+                descripcion = tarea.Descripcion,
+                fechaCreacion = tarea.FechaCreacion,
+                fechaVencimiento = tarea.FechaVencimiento,
+                completado = tarea.Completada.ToString(),
+                prioridad = (int)tarea.Prioridad,
+                etiqueta = tarea.Etiqueta
+            };
+        await tareasServices.ActualizarTareas(formularioModel);
+
+
+
+        await OnSubmit.InvokeAsync(formularioModel);
+
+
+
+        Cerrar();
+
+    }
+}

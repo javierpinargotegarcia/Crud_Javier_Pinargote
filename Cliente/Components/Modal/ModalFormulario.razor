@@ -1,0 +1,78 @@
+﻿@using CLiente.Services
+@using Cliente.Data.Model
+@inject ITareasServices tareasServices;
+
+<div class="modal" style="display: @(IsVisible ? "block" : "none");">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Tarea</h5>
+                <button type="button" class="btn-close" @onclick="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@formData" OnValidSubmit="EnviarFormulario">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <InputText id="titulo" class="form-control" @bind-Value="formData.titulo" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <InputTextArea id="descripcion" class="form-control" @bind-Value="formData.descripcion" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechaCreacion" class="form-label">Fecha de Creación</label>
+                        <InputDate id="fechaCreacion" class="form-control" @bind-Value="formData.fechaCreacion" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                        <InputDate id="fechaVecimiento" class="form-control" @bind-Value="formData.fechaVencimiento" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Estado</label>
+                        <InputSelect id="estado" class="form-control" @bind-Value="formData.completado">
+                            <option value="Completada">Completada</option>
+                            <option value="En Proceso">En Proceso</option>
+                        </InputSelect>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cerrar">Cerrar</button>
+                <button type="submit" class="btn btn-primary" @onclick="EnviarFormulario">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+   
+    [Parameter] 
+    public EventCallback<FormularioModel> OnSubmit { get; set; }
+    public FormularioModel formData { get; set; } = new();
+    public bool IsVisible { get; private set; } = false;
+
+    public void Mostrar()
+    {
+        formData = new FormularioModel(); 
+        IsVisible = true;
+        StateHasChanged();
+    }
+
+    public void Cerrar()
+    {
+        IsVisible = false;
+        StateHasChanged();
+    }
+
+    private async Task EnviarFormulario()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await tareasServices.AgregarTareas(formData);
+            await OnSubmit.InvokeAsync(formData);
+        }
+        Cerrar();
+    }
+    
+ 
+}
